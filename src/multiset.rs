@@ -14,9 +14,7 @@ where
     }
 
     pub fn with_capacity(capacity: usize) -> Self {
-        Self {
-            0: HashMap::with_capacity(capacity),
-        }
+        Self(HashMap::with_capacity(capacity))
     }
 
     pub fn insert(&mut self, key: K) {
@@ -48,9 +46,7 @@ where
     K: Eq + Hash,
 {
     fn default() -> Self {
-        Self {
-            0: HashMap::default(),
-        }
+        Self(HashMap::default())
     }
 }
 

@@ -5,8 +5,18 @@ pub fn anchor_selector() -> Selector {
     Selector::parse("a").unwrap()
 }
 
+// Todo change number_regex() to match numbers with commas and periods
+/// Currently Possible Numbers:
+/// 123
+/// 12300
+/// 123.45
+/// 123.0
+/// .123
+/// 0.123
+/// 0.0123
+/// 00123
 pub fn number_regex() -> Regex {
-    Regex::new(r"([0-9]+)").unwrap()
+    Regex::new(r"([0-9]*\.?[0-9]+)").unwrap()
 }
 
 pub fn split(source: Vec<String>, chunks: usize) -> Vec<Vec<String>> {
