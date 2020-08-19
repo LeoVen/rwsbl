@@ -2,16 +2,22 @@ use crate::multiset::Multiset;
 use std::fmt;
 use std::fmt::Formatter;
 
-struct ArrayMap([usize; 9]);
+pub struct Stats<'a> {
+    pub url_stats: Vec<BenfordStats<'a>>,
+    pub success: usize,
+    pub fail: usize,
+}
+
+pub struct ArrayMap(pub [usize; 9]);
 
 /// Stores relevant data about a certain URL.
 pub struct BenfordStats<'a> {
     /// The url where the stats were taken.
-    url: &'a str,
+    pub url: &'a str,
     /// Initial number frequency. 0 is not used.
-    freq: ArrayMap,
+    pub freq: ArrayMap,
     /// Maps the size of numbers to their frequency.
-    size_freq: Multiset<u64>,
+    pub size_freq: Multiset<u64>,
 }
 
 impl<'a> BenfordStats<'a> {
