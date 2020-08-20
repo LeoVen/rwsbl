@@ -1,4 +1,4 @@
-use crate::stats::{BenfordStats, Stats};
+use crate::stats::{BenfordStats, FreqType, Stats};
 use crate::util::{anchor_selector, number_regex};
 use reqwest::blocking::Client;
 use scraper::Html;
@@ -68,11 +68,23 @@ pub fn get_links(html: &str, url: &Url) -> HashSet<String> {
 /// Gets all useful data from the HTML acquired by the URL
 pub fn get_data<'a>(html: &'a str, url: &'a Url) -> BenfordStats<'a> {
     let mut result = BenfordStats::default();
+    result.url = url.as_str();
     result.child_urls = get_links(html, url);
     for cap in number_regex().captures_iter(html) {
         if let Some(m) = cap.get(1) {
-            let number = treat_number(m.as_str());
-
+            let number = treat_number(m.as_str().to_string());
+            if number.len() > 0 {
+                let first = number.chars().nth(0);
+                let last = number.chars().nth(number.len() - 1);
+                if first.is_some() && last.is_some() {
+                    let first = first.unwrap().to_digit(10);
+                    let last = last.unwrap().to_digit(10);
+                    if first.is_some() && last.is_some() {
+                        result.add(first.unwrap() as usize, FreqType::Start);
+                        result.add(last.unwrap() as usize, FreqType::End);
+                    }
+                }
+            }
         }
     }
     result
@@ -82,12 +94,41 @@ pub fn get_data<'a>(html: &'a str, url: &'a Url) -> BenfordStats<'a> {
 /// > See number_regex()
 /// 123    -> 123
 /// 12300  -> 123
-/// 123.45 -> 12345
+/// 12.3   -> 123
 /// 123.0  -> 123
 /// .123   -> 123
 /// 0.123  -> 123
+/// 00.123 -> 123
 /// 0.0123 -> 123
 /// 00123  -> 123
-pub fn treat_number(number: &str) -> String {
-    todo!()
+pub fn treat_number(mut number: String) -> String {
+    number = number.replace(".", "");
+    while number.len() > 0 && number.chars().nth(number.len() - 1) == Some('0') {
+        let _ = number.pop();
+    }
+    let mut start = 0;
+    while number.len() > 0 && number.chars().nth(start) == Some('0') {
+        start += 1;
+    }
+    if number.len() > 0 {
+        number.drain(..start);
+    }
+    number
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    #[test]
+    fn treat_number_test() {
+        assert_eq!("123", treat_number("123".to_string()));
+        assert_eq!("123", treat_number("12300".to_string()));
+        assert_eq!("123", treat_number("12.3".to_string()));
+        assert_eq!("123", treat_number("123.0".to_string()));
+        assert_eq!("123", treat_number(".123".to_string()));
+        assert_eq!("123", treat_number("0.123".to_string()));
+        assert_eq!("123", treat_number("00.123".to_string()));
+        assert_eq!("123", treat_number("0.0123".to_string()));
+        assert_eq!("123", treat_number("00123".to_string()));
+    }
 }

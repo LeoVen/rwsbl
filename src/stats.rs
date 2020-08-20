@@ -10,6 +10,11 @@ pub struct Stats<'a> {
     pub fail: usize,
 }
 
+pub enum FreqType {
+    Start,
+    End,
+}
+
 pub struct ArrayMap(pub [usize; 9]);
 
 /// Stores relevant data about a certain URL.
@@ -18,15 +23,24 @@ pub struct BenfordStats<'a> {
     pub url: &'a str,
     /// The URL's child URLs
     pub child_urls: HashSet<String>,
-    /// Initial number frequency. 0 is not used.
-    pub freq: ArrayMap,
+    /// First number frequency. 0 is not used.
+    pub freq_start: ArrayMap,
+    /// Last number frequency. 0 is not used.
+    pub freq_end: ArrayMap,
     /// Maps the size of numbers to their frequency.
     pub size_freq: Multiset<u64>,
 }
 
 impl<'a> BenfordStats<'a> {
-    pub fn set(&mut self, key: usize, value: usize) {
-        self.freq.0[key] = value;
+    pub fn add(&mut self, key: usize, freq_type: FreqType) {
+        if key == 0 {
+            // Error?
+            return;
+        }
+        match freq_type {
+            FreqType::Start => self.freq_start.0[key - 1] += 1,
+            FreqType::End => self.freq_end.0[key - 1] += 1,
+        }
     }
 }
 
@@ -35,7 +49,8 @@ impl<'a> Default for BenfordStats<'a> {
         Self {
             url: "",
             child_urls: HashSet::default(),
-            freq: ArrayMap([0; 9]),
+            freq_start: ArrayMap([0; 9]),
+            freq_end: ArrayMap([0; 9]),
             size_freq: Multiset::default(),
         }
     }
@@ -61,6 +76,10 @@ impl fmt::Display for ArrayMap {
 
 impl<'a> fmt::Display for BenfordStats<'a> {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        write!(f, "\"{}\", {}", self.url, self.freq)
+        write!(
+            f,
+            "\"{}\", {}, {}",
+            self.url, self.freq_start, self.freq_end
+        )
     }
 }

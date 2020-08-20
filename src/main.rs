@@ -33,8 +33,11 @@ fn main() {
     let initial_url = Url::parse(url).expect("Could not parse initial URL");
     let initial_data = get_data(&initial_body, &initial_url);
 
-    // TODO
-    todo!();
+    println!("{}", initial_data);
+
+    // TODO Recursively get all links, saving the body. Then, process the body,
+    // getting statistics on the numbers of the html body.
+    return;
 
     // let mut set = Multiset::new();
     //

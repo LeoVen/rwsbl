@@ -5,14 +5,14 @@ pub fn anchor_selector() -> Selector {
     Selector::parse("a").unwrap()
 }
 
-// Todo change number_regex() to match numbers with commas and periods
 /// Currently Possible Numbers:
 /// 123
 /// 12300
-/// 123.45
+/// 12.3
 /// 123.0
 /// .123
 /// 0.123
+/// 00.123
 /// 0.0123
 /// 00123
 pub fn number_regex() -> Regex {
