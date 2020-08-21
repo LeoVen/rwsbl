@@ -6,29 +6,51 @@ use std::collections::HashSet;
 use std::io::{stdout, Write};
 use url::Url;
 
-pub fn thread_process<'a>(links: Vec<String>, _depth: usize) -> Stats<'a> {
-    println!("Spawned Thread from Process {}", std::process::id());
+pub fn thread_process<'a>(links: HashSet<String>, depth: usize, ident: &'static str) -> Stats {
+    println!(
+        "Spawned Thread from Process {}, received {}",
+        std::process::id(),
+        links.len()
+    );
     std::thread::sleep(std::time::Duration::from_secs(1));
-    let mut success = 0;
-    let mut fail = 0;
-    let mut result = vec![];
+    build_stats(
+        &reqwest::blocking::Client::new(),
+        Stats::new(Some(links.len())),
+        &links,
+        depth,
+        ident,
+    )
+}
 
-    let client = reqwest::blocking::Client::new();
-
-    for link in links.iter() {
-        let _ = print!("+");
-        let _ = stdout().flush();
-        match client.get(link).send() {
-            Ok(_) => success += 1,
-            Err(_) => fail += 1,
+pub fn build_stats<'a>(
+    client: &Client,
+    stats: Stats,
+    links: &HashSet<String>,
+    depth: usize,
+    ident: &'static str,
+) -> Stats {
+    if depth == 0 {
+        return stats;
+    }
+    let mut result = Stats::new(Some(links.len()));
+    for url in links.iter() {
+        if let Ok(html) = get_html(client, url) {
+            if let Ok(url) = Url::parse(url) {
+                let data = get_data(&html, &url);
+                result = build_stats(client, result, &data.child_urls, depth - 1, ident);
+                result.add(data);
+                let _ = print!("[+{}]", ident);
+            } else {
+                let _ = print!("[-{}]", ident);
+                result.fail();
+            }
+        } else {
+            let _ = print!("[-{}]", ident);
+            result.fail();
         }
+        let _ = stdout().flush();
     }
-
-    Stats {
-        success,
-        fail,
-        url_stats: result,
-    }
+    stats.merge(result)
 }
 
 /// Tries to get the html content of a URL, reusing a provided client
@@ -66,13 +88,14 @@ pub fn get_links(html: &str, url: &Url) -> HashSet<String> {
 }
 
 /// Gets all useful data from the HTML acquired by the URL
-pub fn get_data<'a>(html: &'a str, url: &'a Url) -> BenfordStats<'a> {
+pub fn get_data<'a>(html: &'a str, url: &'a Url) -> BenfordStats {
     let mut result = BenfordStats::default();
-    result.url = url.as_str();
+    result.url = url.as_str().to_string();
     result.child_urls = get_links(html, url);
     for cap in number_regex().captures_iter(html) {
         if let Some(m) = cap.get(1) {
             let number = treat_number(m.as_str().to_string());
+            result.size_freq.insert(number.len() as u64);
             if number.len() > 0 {
                 let first = number.chars().nth(0);
                 let last = number.chars().nth(number.len() - 1);

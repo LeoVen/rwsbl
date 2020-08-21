@@ -9,14 +9,17 @@ impl<K> Multiset<K>
 where
     K: Eq + Hash,
 {
+    #[allow(dead_code)]
     pub fn new() -> Self {
         Self { 0: HashMap::new() }
     }
 
+    #[allow(dead_code)]
     pub fn with_capacity(capacity: usize) -> Self {
         Self(HashMap::with_capacity(capacity))
     }
 
+    #[allow(dead_code)]
     pub fn insert(&mut self, key: K) {
         match self.0.entry(key) {
             Occupied(mut entry) => {
@@ -28,14 +31,17 @@ where
         }
     }
 
+    #[allow(dead_code)]
     pub fn multiplicity(&self, key: &K) -> usize {
         *self.0.get(key).unwrap_or(&(0 as usize))
     }
 
+    #[allow(dead_code)]
     pub fn inner(&self) -> &HashMap<K, usize> {
         &self.0
     }
 
+    #[allow(dead_code)]
     pub fn into_inner(self) -> HashMap<K, usize> {
         self.0
     }

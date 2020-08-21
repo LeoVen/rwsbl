@@ -19,6 +19,15 @@ pub fn number_regex() -> Regex {
     Regex::new(r"([0-9]*\.?[0-9]+)").unwrap()
 }
 
+const LETTERS: [&'static str; 26] = [
+    "a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s",
+    "t", "u", "v", "w", "x", "y", "z",
+];
+
+pub fn num_to_letter_ascii(num: usize) -> &'static str {
+    LETTERS[num % LETTERS.len()]
+}
+
 pub fn split(source: Vec<String>, chunks: usize) -> Vec<Vec<String>> {
     if source.len() == 0 {
         return vec![];
